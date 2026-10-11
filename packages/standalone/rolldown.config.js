@@ -2,6 +2,43 @@ import { defineConfig } from "rolldown";
 import { dts } from "rolldown-plugin-dts";
 import postcss from "rollup-plugin-postcss";
 
+// Scope reused CSS only in the Searchia output; preserve original bundle selectors.
+const searchiaScope = {
+  postcssPlugin: "searchia-scope",
+  Once(root) {
+    root.walkAtRules(/keyframes$/i, (rule) => {
+      rule.params = `searchia-${rule.params}`;
+    });
+    root.walkDecls(/^animation(?:-name)?$/, (declaration) => {
+      declaration.value = declaration.value.replace(
+        /\b(shimmer|ss-fade-in|ss-copied-pop|modalEnter)\b/g,
+        "searchia-$1",
+      );
+    });
+    root.walkRules((rule) => {
+      if (
+        rule.parent?.type === "atrule" &&
+        /keyframes$/i.test(rule.parent.name)
+      )
+        return;
+      rule.selectors = rule.selectors.flatMap((selector) => {
+        if (selector.startsWith(".searchia-widget")) return [selector];
+        if (selector.includes(".ssask-exp"))
+          return [
+            selector.replace(
+              ".ssask-exp",
+              ".ssask-exp:where(.searchia-widget)",
+            ),
+          ];
+        return [
+          `:where(.searchia-widget) ${selector}`,
+          `${selector}:where(.searchia-widget)`,
+        ];
+      });
+    });
+  },
+};
+
 const common = {
   define: { "process.env.NODE_ENV": JSON.stringify("production") },
   external: [],
@@ -64,6 +101,24 @@ export default defineConfig([
     plugins: [
       postcss({
         extract: "sidepanel-askai.min.css",
+      }),
+    ],
+    ...common,
+  },
+  {
+    input: "src/vanilla/searchia-chat.tsx",
+    output: {
+      dir: "dist",
+      entryFileNames: "searchia-chat.min.js",
+      format: "umd",
+      name: "SearchiaChat",
+      sourcemap: true,
+      minify: true,
+    },
+    plugins: [
+      postcss({
+        extract: "searchia-chat.min.css",
+        plugins: [searchiaScope],
       }),
     ],
     ...common,

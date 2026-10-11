@@ -12,3 +12,17 @@ export { default as SidepanelAskAI } from "./components/sidepanel-askai/index";
 
 // Shared types
 export type { HitsAttributesMapping } from "./components/types";
+export {
+  MockSearchiaAdapter,
+  SearchiaApiAdapter,
+} from "./searchia/mock-adapter";
+export { default as SearchiaChat } from "./searchia/searchia-chat";
+// Searchia Agent Studio Chat Widget
+export type {
+  SearchiaChatAdapter,
+  SearchiaChatConfig,
+  SearchiaChatMessage,
+  SearchiaLanguage,
+  SendMessageOptions,
+  SuggestedQuestionItem,
+} from "./searchia/types";

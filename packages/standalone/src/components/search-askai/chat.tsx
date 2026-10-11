@@ -32,11 +32,7 @@ import type { SuggestedQuestionHit } from "./use-suggested-questions";
 
 function useClipboard() {
   const copyText = useCallback(async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      // Silently fail - clipboard access might be blocked
-    }
+    await navigator.clipboard.writeText(text);
   }, []);
 
   return { copyText };
@@ -44,7 +40,27 @@ function useClipboard() {
 
 // keyboard listener not needed: input handled in parent
 
+export interface ChatWidgetLabels {
+  welcomeTitle: string;
+  welcomeSubtitle: string;
+  thinking: string;
+  reasoning: string;
+  feedbackThanks: string;
+  submitting: string;
+  like: string;
+  dislike: string;
+  copied: string;
+  copyAnswer: string;
+  copyCode: string;
+  copy: string;
+  error: string;
+  feedbackError: string;
+  copyError: string;
+}
+
 interface ChatWidgetProps {
+  labels?: ChatWidgetLabels;
+  autoDirection?: boolean;
   messages: Message[];
   error: Error | null;
   isGenerating: boolean;
@@ -96,6 +112,8 @@ interface Exchange {
 }
 
 export const ChatWidget = memo(function ChatWidget({
+  labels,
+  autoDirection = false,
   messages,
   error,
   isGenerating,
@@ -115,6 +133,9 @@ export const ChatWidget = memo(function ChatWidget({
   newestExchangeFirst = true,
 }: ChatWidgetProps) {
   const { copyText } = useClipboard();
+  const [actionError, setActionError] = useState<
+    "feedbackError" | "copyError" | null
+  >(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   /** When false, user has scrolled away from the bottom; avoid snapping on updates. */
   const stickChatToBottomRef = useRef(true);
@@ -131,6 +152,7 @@ export const ChatWidget = memo(function ChatWidget({
     if (!exchange.assistantMessage) return;
     const customHandler = vote === 1 ? onThumbsUp : onThumbsDown;
     try {
+      setActionError(null);
       setSubmittingExchangeId(exchange.id);
       if (customHandler) {
         await customHandler(exchange.userMessage.id);
@@ -158,7 +180,7 @@ export const ChatWidget = memo(function ChatWidget({
         return next;
       });
     } catch {
-      // ignore errors
+      if (labels) setActionError("feedbackError");
     } finally {
       setSubmittingExchangeId(null);
     }
@@ -246,10 +268,12 @@ export const ChatWidget = memo(function ChatWidget({
       <div className="ss-qa-list">
         {exchanges.length === 0 ? (
           <div className="ss-chat-welcome">
-            <h2 className="ss-chat-welcome-title">How can I help you today?</h2>
+            <h2 className="ss-chat-welcome-title">
+              {labels?.welcomeTitle ?? "How can I help you today?"}
+            </h2>
             <p className="ss-chat-welcome-subtitle">
-              I search through your content to help you find answers to your
-              questions, fast.
+              {labels?.welcomeSubtitle ??
+                "I search through your content to help you find answers to your questions, fast."}
             </p>
             {suggestedQuestions && suggestedQuestions.length > 0 ? (
               <div className="ss-suggested-questions">
@@ -287,10 +311,19 @@ export const ChatWidget = memo(function ChatWidget({
           </p>
         ) : null}
         {/* other errors - never show AI-217 in the generic banner */}
-        {error && !isAskAiPromptBlockingError(error, Boolean(agentStudio)) && (
-          <div className="ss-error-banner">{error.message}</div>
-        )}
+        {error &&
+          (labels ||
+            !isAskAiPromptBlockingError(error, Boolean(agentStudio))) && (
+            <div className="ss-error-banner">
+              {labels?.error ?? error.message}
+            </div>
+          )}
 
+        {actionError && labels && (
+          <div className="ss-error-banner" role="alert">
+            {labels[actionError]}
+          </div>
+        )}
         {/* exchanges */}
         {orderedExchanges.map((exchange, index) => {
           const isLastExchange = newestExchangeFirst
@@ -300,7 +333,10 @@ export const ChatWidget = memo(function ChatWidget({
           return (
             <article key={exchange.id} className="ss-qa-card">
               <div className="ss-qa-header">
-                <div className="ss-qa-question">
+                <div
+                  className="ss-qa-question"
+                  dir={autoDirection ? "auto" : undefined}
+                >
                   {exchange.userMessage.parts.map((part, index) =>
                     part.type === "text" ? (
                       // biome-ignore lint/suspicious/noArrayIndexKey: better
@@ -325,8 +361,12 @@ export const ChatWidget = memo(function ChatWidget({
                           const text =
                             typeof part.text === "string" ? part.text : "";
                           return (
-                            // biome-ignore lint/suspicious/noArrayIndexKey: better
-                            <MemoizedMarkdown key={`${index}`}>
+                            <MemoizedMarkdown
+                              // biome-ignore lint/suspicious/noArrayIndexKey: message parts retain their order while streaming
+                              key={`${index}`}
+                              labels={labels}
+                              autoDirection={autoDirection}
+                            >
                               {text}
                             </MemoizedMarkdown>
                           );
@@ -339,7 +379,7 @@ export const ChatWidget = memo(function ChatWidget({
                             <p className="ss-tool-info" key={`${index}`}>
                               <BrainIcon />{" "}
                               <span className="ss-shimmer-text">
-                                Reasoning...
+                                {labels?.reasoning ?? "Reasoning..."}
                               </span>
                             </p>
                           );
@@ -400,7 +440,9 @@ export const ChatWidget = memo(function ChatWidget({
                     </div>
                   ) : (
                     <div className="ss-qa-markdown ss-qa-generating ss-shimmer-text">
-                      {isGenerating && isLastExchange ? "Thinking..." : ""}
+                      {isGenerating && isLastExchange
+                        ? (labels?.thinking ?? "Thinking...")
+                        : ""}
                     </div>
                   )}
                 </div>
@@ -410,18 +452,18 @@ export const ChatWidget = memo(function ChatWidget({
                 {exchange.assistantMessage && !isGenerating ? (
                   acknowledgedExchangeIds.has(exchange.id) ? (
                     <span className="ss-qa-feedback-ack ss-fade">
-                      Thanks for your feedback!
+                      {labels?.feedbackThanks ?? "Thanks for your feedback!"}
                     </span>
                   ) : submittingExchangeId === exchange.id ? (
                     <span className="ss-qa-feedback-ack ss-shimmer-text">
-                      Submitting...
+                      {labels?.submitting ?? "Submitting..."}
                     </span>
                   ) : (
                     <div className="ss-qa-actions-group">
                       <button
                         type="button"
-                        title="Like"
-                        aria-label="Like"
+                        title={labels?.like ?? "Like"}
+                        aria-label={labels?.like ?? "Like"}
                         className="ss-qa-action-btn"
                         disabled={
                           !exchange.assistantMessage ||
@@ -433,8 +475,8 @@ export const ChatWidget = memo(function ChatWidget({
                       </button>
                       <button
                         type="button"
-                        title="Dislike"
-                        aria-label="Dislike"
+                        title={labels?.dislike ?? "Dislike"}
+                        aria-label={labels?.dislike ?? "Dislike"}
                         className="ss-qa-action-btn"
                         disabled={
                           !exchange.assistantMessage ||
@@ -453,10 +495,14 @@ export const ChatWidget = memo(function ChatWidget({
                     copiedExchangeId === exchange.id ? "is-copied" : ""
                   }`}
                   aria-label={
-                    copiedExchangeId === exchange.id ? "Copied" : "Copy answer"
+                    copiedExchangeId === exchange.id
+                      ? (labels?.copied ?? "Copied")
+                      : (labels?.copyAnswer ?? "Copy answer")
                   }
                   title={
-                    copiedExchangeId === exchange.id ? "Copied" : "Copy answer"
+                    copiedExchangeId === exchange.id
+                      ? (labels?.copied ?? "Copied")
+                      : (labels?.copyAnswer ?? "Copy answer")
                   }
                   disabled={
                     !exchange.assistantMessage ||
@@ -473,6 +519,7 @@ export const ChatWidget = memo(function ChatWidget({
                       .join("")
                       .trim();
                     if (!textContent) return;
+                    setActionError(null);
                     try {
                       if (onCopy) {
                         await onCopy(textContent);
@@ -487,7 +534,7 @@ export const ChatWidget = memo(function ChatWidget({
                         setCopiedExchangeId(null);
                       }, 1500);
                     } catch {
-                      // noop – copy may fail silently
+                      if (labels) setActionError("copyError");
                     }
                   }}
                 >

@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Searchia AI Chat Widget — Embed Demo</title>
+    <!-- Searchia Widget Styles (self-contained, no iframe) -->
+    <link
+      rel="stylesheet"
+      href="./node_modules/@algolia/sitesearch/dist/searchia-chat.min.css"
+    />
+    <style>
+      :root {
+        --bg: #f8fafc;
+        --card-bg: #ffffff;
+        --text: #0f172a;
+        --text-muted: #64748b;
+        --border: #e2e8f0;
+        --primary: #0052ff;
+        --primary-light: #eff6ff;
+      }
+
+      body.dark {
+        --bg: #0f172a;
+        --card-bg: #1e293b;
+        --text: #f8fafc;
+        --text-muted: #94a3b8;
+        --border: #334155;
+        --primary: #3b82f6;
+        --primary-light: #1e3a8a;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        padding: 2rem 1.5rem;
+        min-height: 100vh;
+        transition:
+          background-color 0.2s ease,
+          color 0.2s ease;
+      }
+
+      .container {
+        max-width: 860px;
+        margin: 0 auto;
+      }
+
+      header {
+        margin-bottom: 2.5rem;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      .brand-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .badge-poc {
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.2rem 0.5rem;
+        border-radius: 9999px;
+        background-color: #dbeafe;
+        color: #1e40af;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .theme-toggle {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border);
+        background-color: var(--card-bg);
+        color: var(--text);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .theme-toggle:hover {
+        background-color: var(--primary-light);
+        border-color: var(--primary);
+      }
+
+      .card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+
+      .card h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+      }
+
+      .card p {
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+      }
+
+      .pill-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin: 1rem 0;
+      }
+
+      .pill {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 9999px;
+        background: var(--primary-light);
+        color: var(--primary);
+        font-weight: 600;
+      }
+
+      code {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.875rem;
+        background-color: rgba(100, 116, 139, 0.12);
+        padding: 0.15rem 0.35rem;
+        border-radius: 0.25rem;
+      }
+
+      pre {
+        background-color: #1e293b;
+        color: #f8fafc;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        font-size: 0.85rem;
+        margin: 1rem 0;
+      }
+
+      .status-box {
+        border-left: 4px solid #10b981;
+        padding: 0.75rem 1rem;
+        background-color: rgba(16, 185, 129, 0.08);
+        border-radius: 0 0.5rem 0.5rem 0;
+        margin-top: 1rem;
+        font-size: 0.9rem;
+      }
+
+      .status-box strong {
+        color: #059669;
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border);
+        background: var(--card-bg);
+        color: var(--text);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+
+      .btn-primary {
+        background: var(--primary);
+        color: #ffffff;
+        border-color: var(--primary);
+      }
+
+      .btn-primary:hover {
+        background: #0040cc;
+        color: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="brand-title">
+          <span>Searchia</span>
+          <span class="badge-poc">Agent Studio POC</span>
+        </div>
+        <button class="theme-toggle" id="themeToggleBtn" type="button">
+          Toggle Theme
+        </button>
+      </header>
+
+      <div class="card">
+        <h2>Embeddable AI Chat Widget (Vanilla JS)</h2>
+        <p>
+          This test page demonstrates the framework-independent Searchia AI Chat
+          widget. It mounts directly to the DOM without an
+          <code>&lt;iframe&gt;</code>, reuses the tested UI and markdown
+          rendering from the reference repository, and runs against the
+          decoupled <strong>MockSearchiaAdapter</strong>.
+        </p>
+
+        <div class="pill-list">
+          <span class="pill">✓ Framework Agnostic</span>
+          <span class="pill">✓ No iframe</span>
+          <span class="pill">✓ Markdown & Code Copy</span>
+          <span class="pill">✓ Streaming Responses</span>
+          <span class="pill">✓ Isolated Adapter Layer</span>
+          <span class="pill">✓ Zero API Secrets Exposed</span>
+        </div>
+
+        <div class="status-box">
+          <strong>Status:</strong> Active with <code>MockSearchiaAdapter</code>.
+          Click the floating <em>"از سرچیا بپرسید"</em> button in the bottom-right
+          corner to open the chat panel. Persian is the default; switch to English in the panel header without losing the conversation.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>How it is Embedded</h2>
+        <p>
+          Customers can embed Searchia chat on any static or dynamic website
+          using standard HTML tags:
+        </p>
+        <pre><code>&lt;!-- 1. Include Searchia styles and script --&gt;
+&lt;link rel="stylesheet" href="searchia-chat.min.css" /&gt;
+&lt;script src="searchia-chat.min.js"&gt;&lt;/script&gt;
+
+&lt;!-- 2. Initialize widget on page load --&gt;
+&lt;script&gt;
+  SearchiaChat.init({
+    language: "fa", // default; also supports "en"
+    triggerPosition: "fixed" // or "inline"
+  });
+&lt;/script&gt;</code></pre>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" id="reinitBtn" type="button">
+            Reinitialize Widget
+          </button>
+          <button class="btn" id="destroyBtn" type="button">
+            Destroy Widget
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Searchia Widget Script (self-contained UMD bundle) -->
+    <script src="./node_modules/@algolia/sitesearch/dist/searchia-chat.min.js"></script>
+
+    <script>
+      // Theme toggle helper
+      const themeBtn = document.getElementById("themeToggleBtn");
+      themeBtn.addEventListener("click", () => {
+        document.documentElement.classList.toggle("dark");
+        document.body.classList.toggle("dark");
+      });
+
+      // Initialize Searchia Chat Widget
+      function initSearchiaWidget() {
+        if (window.SearchiaChat) {
+          window.SearchiaChat.init({
+            language: "fa",
+            triggerPosition: "fixed",
+            suggestedQuestionsEnabled: true,
+          });
+          console.info("[Demo] SearchiaChat initialized successfully.");
+        } else {
+          console.error(
+            "[Demo] SearchiaChat bundle not found on window object.",
+          );
+        }
+      }
+
+      // Auto-init on load
+      initSearchiaWidget();
+
+      // Reinit and Destroy buttons
+      document.getElementById("reinitBtn").addEventListener("click", () => {
+        if (window.SearchiaChat) {
+          window.SearchiaChat.destroy();
+          initSearchiaWidget();
+        }
+      });
+
+      document.getElementById("destroyBtn").addEventListener("click", () => {
+        if (window.SearchiaChat) {
+          window.SearchiaChat.destroy();
+          console.info("[Demo] SearchiaChat destroyed.");
+        }
+      });
+    </script>
+  </body>
+</html>
